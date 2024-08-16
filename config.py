@@ -7,6 +7,7 @@ SCOPE = [
     "https://www.googleapis.com/auth/drive",
 ]
 
+TABLE_NAME = "table_name"
 SHEET_NAME = "sheet_name"
 ADMIN_USER_COLUMN = "B"
 
@@ -31,6 +32,10 @@ USER_COLUMNS_MAPPING = {
 # [Telegram configs]
 BOT_TOKEN = "bot_token"
 
+DEBTORS_MESSAGE_UA = "Боржники:\n"
+DEBTORS_DEBT_MESSAGE_UA = "{name} твій баланс {balance}, заплати {pay}\n"
+NO_DEBTORS_MESSAGE_UA = "Нема :)"
+
 DESCRIPTION_PAID_UA = "Від: "
 DESCRIPTION_WITHDRAWAL_UA = "На чорну картку"
 DESCRIPTION_INCOME_UA = "Додавання до банки"
@@ -39,6 +44,7 @@ DESCRIPTION_INCOME_UA = "Додавання до банки"
 MONO_TOKEN = "monobank_token"
 MONO_ACCOUNT = "0"
 MONOBANKA_ID = "monobanka_id"
+MONOBANKA_LINK = "https://monobanka.link"
 
 # [Files with stored values]
 LAST_PAY_UPDATE_FILE_NAME = "last_pay_update.txt"

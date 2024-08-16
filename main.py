@@ -7,23 +7,26 @@ import config
 
 
 def get_debtors_message(client: Client) -> str:
-    worksheet = client.open("spotify").sheet1
+    worksheet = client.open(config.TABLE_NAME).sheet1
 
     table = worksheet.batch_get(["C1:F2"])[0]
 
-    message = "Боржники:\n"
+    message = config.DEBTORS_MESSAGE_UA
     debtors_exists = False
     for i in range(len(table[0])):
         balance = float(table[1][i].replace(",", "."))
         if float(balance) < 55:
             debtors_exists = True
             # TODO: round zaplati to up int
-            message += f"{table[0][i]} твій баланс {balance}, заплати {55 - balance}\n"
+            # TODO: add USD value instead of 55
+            message += config.DEBTORS_DEBT_MESSAGE_UA.format(
+                name=table[0][i], balance=balance, pay=55 - balance
+            )
 
     if not debtors_exists:
-        message += "Нема :)"
+        message += config.NO_DEBTORS_MESSAGE_UA
     else:
-        message += "\nhttps://send.monobank.ua/jar/8DkVAacNhm"
+        message += "\n" + config.MONOBANKA_LINK
 
     return message
 
