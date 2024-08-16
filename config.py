@@ -1,5 +1,8 @@
+import os
+
 # [GCP]
 SERVICE_ACCOUNT_CREDENTIALS = "credentials.json"
+
 
 # [Google Sheets]
 SCOPE = [
@@ -29,7 +32,8 @@ USER_COLUMNS_MAPPING = {
     "@telegram_nickname6": "G",
 }
 
-# [Telegram configs]
+
+# [Telegram]
 BOT_TOKEN = "bot_token"
 
 DEBTORS_MESSAGE_UA = "Боржники:\n"
@@ -40,12 +44,17 @@ DESCRIPTION_PAID_UA = "Від: "
 DESCRIPTION_WITHDRAWAL_UA = "На чорну картку"
 DESCRIPTION_INCOME_UA = "Додавання до банки"
 
-# [Monobank configs]
+
+# [Monobank]
 MONO_TOKEN = "monobank_token"
 MONO_ACCOUNT = "0"
 MONOBANKA_ID = "monobanka_id"
 MONOBANKA_LINK = "https://monobanka.link"
 
+
 # [Files with stored values]
-LAST_PAY_UPDATE_FILE_NAME = "last_pay_update.txt"
-CURRENT_ROW_TO_WRITE_FILE_NAME = "current_row_to_write.txt"
+DATA_FILES_FOLDER = "data_files"
+LAST_PAY_UPDATE_FILE_PATH = os.path.join(DATA_FILES_FOLDER, "last_pay_update.txt")
+CURRENT_ROW_TO_WRITE_FILE_PATH = os.path.join(
+    DATA_FILES_FOLDER, "current_row_to_write.txt"
+)
