@@ -1,5 +1,7 @@
 import datetime
+import random
 import time
+from math import floor
 from typing import List, Tuple
 
 import requests
@@ -58,15 +60,16 @@ class MonoManager:
 
         return paid, income
 
-    def get_current_month_spotify_charge(self) -> dict:
+    @classmethod
+    def __get_current_month_spotify_charge(cls) -> dict:
         """
         Return example:
         {'amount': -325.99, 'date': '2024-06-20'}
         """
 
         response = requests.get(
-            f"https://api.monobank.ua/personal/statement/{config.MONO_ACCOUNT}/{self.__get_month_ago_timestamp()}",
-            headers=self.headers,
+            f"https://api.monobank.ua/personal/statement/{config.MONO_ACCOUNT}/{MonoManager.__get_month_ago_timestamp()}",  # noqa: E501
+            headers=MonoManager.headers,
         )
         data = response.json()
 
@@ -78,6 +81,36 @@ class MonoManager:
                     record.get("time")
                 ).strftime("%Y-%m-%d")
                 break
+
+        return result
+
+    @classmethod
+    def __get_user_charge_amounts(cls, users: list, amount: float) -> List[dict]:
+        """
+        Based on the last Spotify withdrawal record.
+        Return example:
+        [
+            {'user': 'Софія', 'amount': -54.34},
+            {'user': 'Саша', 'amount': -54.33}
+        ]
+        """
+
+        # TODO: do not apply to Софія
+        base_user_amount = floor(amount / len(users) * 100) / 100
+        remainder = round(amount - (base_user_amount * len(users)), 2)
+
+        lucky = users.index(random.choice(users))
+
+        result = []
+        for i in range(len(users)):
+            result.append(
+                {
+                    "user": users[i],
+                    "amount": -round(base_user_amount + remainder, 2)
+                    if i == lucky
+                    else -base_user_amount,
+                }
+            )
 
         return result
 
@@ -118,3 +151,35 @@ class MonoManager:
         f.write(time_now)
 
         return "Зарахування на банку внесені"
+
+    def set_user_charge(self) -> str:
+        """
+        Set into Google Sheet user charge for the current month
+        """
+
+        # TODO: check if its time for the charge
+
+        spotify_charge = MonoManager.__get_current_month_spotify_charge()
+        user_list = self.sheet_manager.get_users_list()
+        user_charges = MonoManager.__get_user_charge_amounts(
+            user_list, spotify_charge["amount"]
+        )
+
+        # get row number to write
+        f = open(config.CURRENT_ROW_TO_WRITE_FILE_PATH, "r")
+        row = int(f.readlines()[0])
+
+        # set charge as new row in the table
+        for charge in user_charges:
+            column = config.USER_COLUMNS_MAPPING[charge["user"]]
+            self.sheet_manager.update_users_cell(column, row + 1, charge.get("amount"))
+
+        # update current_row_to_write
+        f = open(config.CURRENT_ROW_TO_WRITE_FILE_PATH, "w")
+        f.write(str(row + 2))
+
+        # TODO: write month name
+        # TODO: write sum for the row
+        # TODO: format cells to grey colour
+
+        return "Спотіфайне відрахування внесено"

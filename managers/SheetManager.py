@@ -57,3 +57,6 @@ class SheetManager:
             f"{column}{row}",
             future_val,
         )
+
+    def get_users_list(self) -> list:
+        return self.worksheet.batch_get(["B1:G1"])[0][0]

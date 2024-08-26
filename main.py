@@ -22,4 +22,8 @@ if __name__ == "__main__":
     def set_updates(message):
         bot.reply_to(message, mono_manager.set_user_pay_updates())
 
+    @bot.message_handler(commands=["set_charge"])
+    def set_charge(message):
+        bot.reply_to(message, mono_manager.set_user_charge())
+
     bot.infinity_polling()
