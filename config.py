@@ -33,6 +33,7 @@ USER_COLUMNS_MAPPING = {
 
 # [Telegram configs]
 BOT_TOKEN = "bot_token"
+ADMIN_USER_ID = 0
 
 DEBTORS_MESSAGE_UA = "Боржники:\n"
 DEBTORS_DEBT_MESSAGE_UA = "{name} твій баланс {balance}, заплати {pay}\n"
