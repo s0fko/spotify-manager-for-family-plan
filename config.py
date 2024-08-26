@@ -35,6 +35,17 @@ USER_COLUMNS_MAPPING = {
 BOT_TOKEN = "bot_token"
 ADMIN_USER_ID = 0
 
+HELP_MESSAGE_UA = (
+    """
+/help - всі команди
+/debtors - список боржників
+
+Команди для власника:
+/set_updates - записати оновлення з банки
+/set_charge - записати оплату за Спотіфай
+    """,  # noqa: E122
+)
+
 DEBTORS_MESSAGE_UA = "Боржники:\n"
 DEBTORS_DEBT_MESSAGE_UA = "{name} твій баланс {balance}, заплати {pay}\n"
 NO_DEBTORS_MESSAGE_UA = "Нема :)"
