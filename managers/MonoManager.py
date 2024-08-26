@@ -77,9 +77,7 @@ class MonoManager:
         for record in data:
             if record.get("description") == "Spotify":
                 result["amount"] = abs(record.get("amount") / 100)
-                result["date"] = datetime.datetime.fromtimestamp(
-                    record.get("time")
-                ).strftime("%Y-%m-%d")
+                result["date"] = record.get("time")
                 break
 
         return result
@@ -157,9 +155,16 @@ class MonoManager:
         Set into Google Sheet user charge for the current month
         """
 
-        # TODO: check if its time for the charge
-
         spotify_charge = MonoManager.__get_current_month_spotify_charge()
+
+        # check if its time for the charge
+        f = open(config.LAST_CHARGE_UPDATE_FILE_PATH, "r")
+        last_charge_update = int(f.readlines()[0])
+        newest_charge_update = int(spotify_charge["date"])
+        if newest_charge_update <= last_charge_update:
+            return "Відрахування ще не потрібно"
+
+        # get user charge amounts
         user_list = self.sheet_manager.get_users_list()
         user_charges = MonoManager.__get_user_charge_amounts(
             user_list, spotify_charge["amount"]
@@ -174,12 +179,16 @@ class MonoManager:
             column = config.USER_COLUMNS_MAPPING[charge["user"]]
             self.sheet_manager.update_users_cell(column, row + 1, charge.get("amount"))
 
+        # TODO: write month name
+        # TODO: write sum for the row
+        # TODO: format cells to grey colour
+
         # update current_row_to_write
         f = open(config.CURRENT_ROW_TO_WRITE_FILE_PATH, "w")
         f.write(str(row + 2))
 
-        # TODO: write month name
-        # TODO: write sum for the row
-        # TODO: format cells to grey colour
+        # update last_charge_update
+        f = open(config.LAST_CHARGE_UPDATE_FILE_PATH, "w")
+        f.write(str(newest_charge_update))
 
         return "Спотіфайне відрахування внесено"
