@@ -1,44 +1,46 @@
-import gspread
-from gspread import Client
-from oauth2client.service_account import ServiceAccountCredentials
 import telebot
 
 import config
+from managers import MonoManager, SheetManager
 
 
-def get_debtors_message(client: Client) -> str:
-    worksheet = client.open('spotify').sheet1
+def admin_only(func):
+    def wrapper(message):
+        if message.from_user.id == config.ADMIN_USER_ID:
+            return func(message)
+        else:
+            bot.reply_to(message, "Команда тільки для власника")
 
-    table = worksheet.batch_get(['C1:F2'])[0]
-
-    message = 'Боржники:\n'
-    debtors_exists = False
-    for i in range(len(table[0])):
-        balance = float(table[1][i].replace(',', '.'))
-        if float(balance) < 55:
-            debtors_exists = True
-            # TODO: round zaplati to up int
-            message += f'{table[0][i]} твій баланс {balance}, заплати {55 - balance}\n'
-
-    if not debtors_exists:
-        message += 'Нема :)'
-    else:
-        message += '\nhttps://send.monobank.ua/jar/8DkVAacNhm'
-
-    return message
+    return wrapper
 
 
-if __name__ == '__main__':
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        config.SERVICE_ACCOUNT_CREDENTIALS,
-        config.SCOPE,
+if __name__ == "__main__":
+    sheet_manager = SheetManager.SheetManager(
+        credentials=config.SERVICE_ACCOUNT_CREDENTIALS,
+        scope=config.SCOPE,
     )
-    client = gspread.authorize(credentials)
+    mono_manager = MonoManager.MonoManager(
+        sheet_manager=sheet_manager,
+    )
 
     bot = telebot.TeleBot(config.BOT_TOKEN)
 
-    @bot.message_handler(commands=['debtors'])
+    @bot.message_handler(commands=["help"])
+    def help(message):
+        bot.reply_to(message, config.HELP_MESSAGE_UA)
+
+    @bot.message_handler(commands=["debtors"])
     def send_debtors(message):
-        bot.reply_to(message, get_debtors_message(client))
+        bot.reply_to(message, sheet_manager.get_debtors_message())
+
+    @bot.message_handler(commands=["set_updates"])
+    @admin_only
+    def set_updates(message):
+        bot.reply_to(message, mono_manager.set_user_pay_updates())
+
+    @bot.message_handler(commands=["set_charge"])
+    @admin_only
+    def set_charge(message):
+        bot.reply_to(message, mono_manager.set_user_charge())
 
     bot.infinity_polling()
