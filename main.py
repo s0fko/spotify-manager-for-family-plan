@@ -9,7 +9,7 @@ def admin_only(func):
         if message.from_user.id == config.ADMIN_USER_ID:
             return func(message)
         else:
-            bot.reply_to(message, "Команда тільки для Соні")
+            bot.reply_to(message, "Команда тільки для власника")
 
     return wrapper
 
@@ -24,6 +24,10 @@ if __name__ == "__main__":
     )
 
     bot = telebot.TeleBot(config.BOT_TOKEN)
+
+    @bot.message_handler(commands=["help"])
+    def help(message):
+        bot.reply_to(message, config.HELP_MESSAGE_UA)
 
     @bot.message_handler(commands=["debtors"])
     def send_debtors(message):
