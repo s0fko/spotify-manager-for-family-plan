@@ -25,6 +25,25 @@ class MonoManager:
         return str(int(time.mktime(one_month_ago.timetuple())))
 
     @classmethod
+    def get_usd_rate_sell(cls) -> float:
+        """
+        Returns 0< if request satisfied.
+        Returns 0 if too many requests
+        """
+
+        response = requests.get("https://api.monobank.ua/bank/currency").json()
+
+        if "errCode" in response:
+            return 0.0
+
+        for record in response:
+            if (
+                record.get("currencyCodeA") == 840
+                and record.get("currencyCodeB") == 980
+            ):
+                return record.get("rateSell")
+
+    @classmethod
     def __get_monobanka_statement(cls, from_time: str) -> Tuple[List[dict]]:
         """
         Valid description types:

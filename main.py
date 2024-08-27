@@ -31,7 +31,12 @@ if __name__ == "__main__":
 
     @bot.message_handler(commands=["debtors"])
     def send_debtors(message):
-        bot.reply_to(message, sheet_manager.get_debtors_message())
+        usd_rate_sell = mono_manager.get_usd_rate_sell()
+        bot.reply_to(
+            message, sheet_manager.get_debtors_message(usd_rate_sell)
+        ) if usd_rate_sell > 0 else bot.reply_to(
+            message, "Моно важко, спробуй ще раз згодом"
+        )
 
     @bot.message_handler(commands=["set_updates"])
     @admin_only

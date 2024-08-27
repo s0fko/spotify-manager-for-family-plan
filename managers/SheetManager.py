@@ -1,3 +1,5 @@
+from math import ceil
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -19,19 +21,22 @@ class SheetManager:
             config.SHEET_NAME
         )
 
-    def get_debtors_message(self) -> str:
+    def get_debtors_message(self, usd_rate_sell: float) -> str:
         table = self.worksheet.batch_get(["D1:G2"])[0]
 
         message = config.DEBTORS_MESSAGE_UA
+        month_payment_uah = (usd_rate_sell * 7.99) / 6
+
         debtors_exists = False
         for i in range(len(table[0])):
             balance = float(table[1][i].replace(",", "."))
-            if float(balance) < 55:
+
+            if float(balance) < month_payment_uah:
                 debtors_exists = True
-                # TODO: round zaplati to up int
-                # TODO: add USD value instead of 55
                 message += config.DEBTORS_DEBT_MESSAGE_UA.format(
-                    name=table[0][i], balance=balance, pay=(55 - balance)
+                    name=table[0][i],
+                    balance=balance,
+                    pay=ceil(month_payment_uah - balance),
                 )
 
         if not debtors_exists:
