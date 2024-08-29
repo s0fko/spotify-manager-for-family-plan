@@ -1,5 +1,8 @@
 import os
 
+# [General]
+LOCALE = "uk_UA.UTF-8"
+
 # [GCP]
 SERVICE_ACCOUNT_CREDENTIALS = "credentials.json"
 

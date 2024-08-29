@@ -1,3 +1,4 @@
+from datetime import datetime
 from math import ceil
 
 import gspread
@@ -61,6 +62,29 @@ class SheetManager:
         self.worksheet.update_acell(
             f"{column}{row}",
             future_val,
+        )
+
+    def set_date_to_row(self, row: str) -> None:
+        current_date = datetime.now()
+        month_name = current_date.strftime("%b %Y")
+
+        self.worksheet.update_acell(
+            f"A{row}",
+            month_name,
+        )
+
+    def set_sum_formula_to_row(self, row: str) -> None:
+        self.worksheet.update_acell(
+            f"H{row}",
+            f"=SUM(B{row}:G{row})",
+        )
+
+    def format_cells_to_grey(self, row: str) -> None:
+        self.worksheet.format(
+            f"A{row}:H{row}",
+            {
+                "backgroundColor": {"red": 0.95, "green": 0.95, "blue": 0.95},
+            },
         )
 
     def get_users_list(self) -> list:
