@@ -13,6 +13,8 @@ TABLE_NAME = "table_name"
 SHEET_NAME = "sheet_name"
 ADMIN_USER_COLUMN = "B"
 
+USERS_TO_SKIP_FROM_LUCKY_CHOOSE = []
+
 USER_NAMES_MAPPING = {
     "John Doe1": "@telegram_nickname1",
     "John Doe2": "@telegram_nickname2",
