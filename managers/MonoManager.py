@@ -196,14 +196,18 @@ class MonoManager:
         f = open(config.CURRENT_ROW_TO_WRITE_FILE_PATH, "r")
         row = int(f.readlines()[0])
 
+        self.sheet_manager.format_cells_to_grey(row + 1)
+
+        # set month name to the first column
+        self.sheet_manager.set_date_to_cell(row + 1)
+
         # set charge as new row in the table
         for charge in user_charges:
             column = config.USER_COLUMNS_MAPPING[charge["user"]]
             self.sheet_manager.update_users_cell(column, row + 1, charge.get("amount"))
 
-        # TODO: write month name
-        # TODO: write sum for the row
-        # TODO: format cells to grey colour
+        # set control sum of Spotify charge
+        self.sheet_manager.set_sum_formula_to_row(row + 1)
 
         # update current_row_to_write
         f = open(config.CURRENT_ROW_TO_WRITE_FILE_PATH, "w")

@@ -1,3 +1,5 @@
+import locale
+
 import telebot
 
 import config
@@ -15,6 +17,8 @@ def admin_only(func):
 
 
 if __name__ == "__main__":
+    locale.setlocale(locale.LC_TIME, config.LOCALE)
+
     sheet_manager = SheetManager.SheetManager(
         credentials=config.SERVICE_ACCOUNT_CREDENTIALS,
         scope=config.SCOPE,
