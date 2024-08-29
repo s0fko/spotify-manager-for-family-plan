@@ -112,7 +112,6 @@ class MonoManager:
         ]
         """
 
-        # TODO: do not apply to Софія
         base_user_amount = floor(amount / len(users) * 100) / 100
         remainder = round(amount - (base_user_amount * len(users)), 2)
 
@@ -185,6 +184,10 @@ class MonoManager:
 
         # get user charge amounts
         user_list = self.sheet_manager.get_users_list()
+        if config.USERS_TO_SKIP_FROM_LUCKY_CHOOSE:
+            for user in config.USERS_TO_SKIP_FROM_LUCKY_CHOOSE:
+                user_list = [u for u in user_list if u != user]
+
         user_charges = MonoManager.__get_user_charge_amounts(
             user_list, spotify_charge["amount"]
         )
