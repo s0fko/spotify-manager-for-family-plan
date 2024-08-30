@@ -180,7 +180,7 @@ class MonoManager:
         last_charge_update = int(f.readlines()[0])
         newest_charge_update = int(spotify_charge["date"])
         if newest_charge_update <= last_charge_update:
-            return "Відрахування ще не потрібно"
+            return config.NO_NEED_TO_WITHDRAWAL_MESSAGE_UA
 
         # get user charge amounts
         user_list = self.sheet_manager.get_users_list()
@@ -217,4 +217,4 @@ class MonoManager:
         f = open(config.LAST_CHARGE_UPDATE_FILE_PATH, "w")
         f.write(str(newest_charge_update))
 
-        return "Спотіфайне відрахування внесено"
+        return config.SUCCESSFUL_WITHDRAWAL_MESSAGE_UA
