@@ -55,6 +55,9 @@ DEBTORS_MESSAGE_UA = "Боржники:\n"
 DEBTORS_DEBT_MESSAGE_UA = "{name} твій баланс {balance}, заплати {pay}\n"
 NO_DEBTORS_MESSAGE_UA = "Нема :)"
 
+SUCCESSFUL_WITHDRAWAL_MESSAGE_UA = "Спотіфайне відрахування внесено"
+NO_NEED_TO_WITHDRAWAL_MESSAGE_UA = "Відрахування ще не потрібно"
+
 # [Monobank configs]
 MONO_TOKEN = "monobank_token"
 MONO_ACCOUNT = "0"
