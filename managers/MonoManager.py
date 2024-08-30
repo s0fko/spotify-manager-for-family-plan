@@ -21,16 +21,13 @@ class MonoManager:
 
     @classmethod
     def __get_month_ago_timestamp(cls) -> str:
+        """Returns a string representing the Unix timestamp for one month ago"""
         one_month_ago = datetime.datetime.now() - relativedelta(days=30)
         return str(int(time.mktime(one_month_ago.timetuple())))
 
     @classmethod
     def get_usd_rate_sell(cls) -> float:
-        """
-        Returns 0< if request satisfied.
-        Returns 0 if too many requests
-        """
-
+        """Returns the USD selling rate as a float, or 0.0 if the request fails"""
         response = requests.get("https://api.monobank.ua/bank/currency").json()
 
         if "errCode" in response:
@@ -44,13 +41,15 @@ class MonoManager:
                 return record.get("rateSell")
 
     @classmethod
-    def __get_monobanka_statement(cls, from_time: str) -> Tuple[List[dict]]:
-        """
-        Valid description types:
-            - 'Від: ' - paid
-            - 'Додавання до банки' - income
-        """
+    def __get_jar_statement(cls, from_time: str) -> Tuple[List[dict]]:
+        """Retrieve the jar statement starting from a specific timestamp.
 
+        Keyword arguments:
+        from_time -- the starting timestamp to retrieve transactions from
+
+        Returns:
+        A tuple containing two lists: one for paid transactions and one for income transactions
+        """
         response = requests.get(
             f"https://api.monobank.ua/personal/statement/{config.MONOBANKA_ID}/{from_time}",
             headers=MonoManager.headers,
@@ -81,11 +80,13 @@ class MonoManager:
 
     @classmethod
     def __get_current_month_spotify_charge(cls) -> dict:
-        """
+        """Fetch the Spotify charge transaction for the current month from Monobank.
+
+        Returns:
+        A dictionary with the amount and date of the Spotify charge.
         Return example:
         {'amount': -325.99, 'date': '2024-06-20'}
         """
-
         response = requests.get(
             f"https://api.monobank.ua/personal/statement/{config.MONO_ACCOUNT}/{MonoManager.__get_month_ago_timestamp()}",  # noqa: E501
             headers=MonoManager.headers,
@@ -103,19 +104,33 @@ class MonoManager:
 
     @classmethod
     def __get_user_charge_amounts(cls, users: list, amount: float) -> List[dict]:
-        """
+        """Calculate the amount each user needs to pay based on the Spotify charge.
+
+        Keyword arguments:
+        users -- a list of user names
+        amount -- the total Spotify charge amount
+
+        Returns:
+        A list of dictionaries with each user's name and the amount they need to pay.
         Based on the last Spotify withdrawal record.
         Return example:
         [
-            {'user': 'Софія', 'amount': -54.34},
-            {'user': 'Саша', 'amount': -54.33}
+            {"user": "@telegram_nickname1", "amount": -54.34},
+            {"user": "@telegram_nickname2", "amount": -54.33},
         ]
         """
-
         base_user_amount = floor(amount / len(users) * 100) / 100
         remainder = round(amount - (base_user_amount * len(users)), 2)
 
-        lucky = users.index(random.choice(users))
+        # choose lucky one who will pay remainder from division
+        lucky = 0
+        if config.USERS_TO_SKIP_FROM_LUCKY_CHOOSE:
+            user_list = []
+            for user in config.USERS_TO_SKIP_FROM_LUCKY_CHOOSE:
+                user_list = [u for u in users if u != user]
+            lucky = users.index(random.choice(user_list))
+        else:
+            lucky = users.index(random.choice(users))
 
         result = []
         for i in range(len(users)):
@@ -131,10 +146,11 @@ class MonoManager:
         return result
 
     def set_user_pay_updates(self) -> str:
-        """
-        Set into Google Sheet user pays and incomes from the last period
-        """
+        """Update the Google Sheet with user payments and incomes from the last period.
 
+        Returns:
+        A message indicating whether the update was successful or if it was not needed.
+        """
         # get time interval
         f = open(config.LAST_PAY_UPDATE_FILE_PATH, "r")
         from_time = int(f.readlines()[0])
@@ -146,7 +162,7 @@ class MonoManager:
             return config.UPDATE_WAS_30_DAYS_AGO_MESSAGE_UA
 
         # get list of statemets
-        paid, income = MonoManager.__get_monobanka_statement(from_time)
+        paid, income = MonoManager.__get_jar_statement(from_time)
 
         # get row number to write
         f = open(config.CURRENT_ROW_TO_WRITE_FILE_PATH, "r")
@@ -156,11 +172,11 @@ class MonoManager:
         for record in paid:
             nickname = config.USER_NAMES_MAPPING.get(record.get("from"))
             column = config.USER_COLUMNS_MAPPING.get(nickname)
-            self.sheet_manager.update_users_cell(column, row, record.get("amount"))
+            self.sheet_manager.update_payment_value(column, row, record.get("amount"))
 
         for record in income:
             column = config.ADMIN_USER_COLUMN
-            self.sheet_manager.update_users_cell(column, row, record.get("amount"))
+            self.sheet_manager.update_payment_value(column, row, record.get("amount"))
 
         # update last_pay_update
         f = open(config.LAST_PAY_UPDATE_FILE_PATH, "w")
@@ -168,11 +184,12 @@ class MonoManager:
 
         return config.PAY_UPDATE_SUCCESSFUL_MESSAGE_UA
 
-    def set_user_charge(self) -> str:
-        """
-        Set into Google Sheet user charge for the current month
-        """
+    def set_monthly_charge(self) -> str:
+        """Set the monthly charge for each user in the Google Sheet.
 
+        Returns:
+        A message indicating whether the charge was successfully recorded or if it was not needed.
+        """
         spotify_charge = MonoManager.__get_current_month_spotify_charge()
 
         # check if its time for the charge
@@ -183,31 +200,17 @@ class MonoManager:
             return config.NO_NEED_TO_WITHDRAWAL_MESSAGE_UA
 
         # get user charge amounts
-        user_list = self.sheet_manager.get_users_list()
-        if config.USERS_TO_SKIP_FROM_LUCKY_CHOOSE:
-            for user in config.USERS_TO_SKIP_FROM_LUCKY_CHOOSE:
-                user_list = [u for u in user_list if u != user]
-
         user_charges = MonoManager.__get_user_charge_amounts(
-            user_list, spotify_charge["amount"]
+            users=self.sheet_manager.get_users_list(),
+            amount=spotify_charge["amount"],
         )
 
         # get row number to write
         f = open(config.CURRENT_ROW_TO_WRITE_FILE_PATH, "r")
         row = int(f.readlines()[0])
 
-        self.sheet_manager.format_cells_to_grey(row + 1)
-
-        # set month name to the first column
-        self.sheet_manager.set_date_to_cell(row + 1)
-
-        # set charge as new row in the table
-        for charge in user_charges:
-            column = config.USER_COLUMNS_MAPPING[charge["user"]]
-            self.sheet_manager.update_users_cell(column, row + 1, charge.get("amount"))
-
-        # set control sum of Spotify charge
-        self.sheet_manager.set_sum_formula_to_row(row + 1)
+        # write current month charge
+        self.sheet_manager.set_month_charge_row(row + 1, user_charges)
 
         # update current_row_to_write
         f = open(config.CURRENT_ROW_TO_WRITE_FILE_PATH, "w")

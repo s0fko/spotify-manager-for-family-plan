@@ -1,5 +1,6 @@
 from datetime import datetime
 from math import ceil
+from typing import List
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -12,7 +13,13 @@ class SheetManager:
     client = ""
     worksheet = ""
 
-    def __init__(self, credentials, scope) -> None:
+    def __init__(self, credentials: str, scope: list) -> None:
+        """Initialize the SheetManager with Google Sheets API credentials and scope.
+
+        Keyword arguments:
+        credentials -- path to the JSON keyfile for Google service account
+        scope -- list of strings representing the authorization scopes
+        """
         self.credentials = ServiceAccountCredentials.from_json_keyfile_name(
             credentials,
             scope,
@@ -22,7 +29,36 @@ class SheetManager:
             config.SHEET_NAME
         )
 
+    def __update_payment_value(self, column: str, row: str, amount: float) -> None:
+        """Update the payment value in the specified cell by adding the given amount.
+
+        Keyword arguments:
+        column -- column letter of the cell to be updated
+        row -- row number of the cell to be updated
+        amount -- amount to be added to the existing value in the cell or 0 if it is empty
+        """
+        current_val = self.worksheet.acell(f"{column}{row}").value
+        current_val = (
+            0
+            if current_val is None
+            else float(current_val.replace(",", ".").replace("\xa0", ""))
+        )
+        future_val = current_val + amount
+
+        self.worksheet.update_acell(
+            f"{column}{row}",
+            future_val,
+        )
+
     def get_debtors_message(self, usd_rate_sell: float) -> str:
+        """Generate a message listing the debtors based on their balances and current USD rate.
+
+        Keyword arguments:
+        usd_rate_sell -- the current selling rate of USD to calculate the payment in UAH
+
+        Returns:
+        A formatted message with the list of debtors and link to jar or a message stating no debtors
+        """
         table = self.worksheet.batch_get(["D1:G2"])[0]
 
         message = config.DEBTORS_MESSAGE_UA
@@ -47,39 +83,14 @@ class SheetManager:
 
         return message
 
-    def update_users_cell(self, column: str, row: str, amount: float) -> None:
+    def set_month_charge_row(self, row: str, user_charges: List[dict]) -> None:
+        """Set the monthly charge row in the spreadsheet and update user charges.
+
+        Keyword arguments:
+        row -- the row number where the month charges will be updated
+        user_charges -- list of dictionaries containing user names and their corresponding charges
         """
-        Used by MonoManager.set_user_pay_updates method
-        """
-        current_val = self.worksheet.acell(f"{column}{row}").value
-        current_val = (
-            0
-            if current_val is None
-            else float(current_val.replace(",", ".").replace("\xa0", ""))
-        )
-        future_val = current_val + amount
-
-        self.worksheet.update_acell(
-            f"{column}{row}",
-            future_val,
-        )
-
-    def set_date_to_row(self, row: str) -> None:
-        current_date = datetime.now()
-        month_name = current_date.strftime("%b %Y")
-
-        self.worksheet.update_acell(
-            f"A{row}",
-            month_name,
-        )
-
-    def set_sum_formula_to_row(self, row: str) -> None:
-        self.worksheet.update_acell(
-            f"H{row}",
-            f"=SUM(B{row}:G{row})",
-        )
-
-    def format_cells_to_grey(self, row: str) -> None:
+        # format cells to grey
         self.worksheet.format(
             f"A{row}:H{row}",
             {
@@ -87,5 +98,27 @@ class SheetManager:
             },
         )
 
+        # set month name to the first column
+        self.worksheet.update_acell(
+            f"A{row}",
+            datetime.now().strftime("%b %Y"),
+        )
+
+        # set charge as new row in the table
+        for charge in user_charges:
+            column = config.USER_COLUMNS_MAPPING[charge["user"]]
+            self.__update_payment_value(column, row, charge.get("amount"))
+
+        # set control sum of Spotify charge
+        self.worksheet.update_acell(
+            f"H{row}",
+            f"=SUM(B{row}:G{row})",
+        )
+
     def get_users_list(self) -> list:
+        """Retrieve the list of users from the spreadsheet.
+
+        Returns:
+        A list of user names from the specified range in the spreadsheet
+        """
         return self.worksheet.batch_get(["B1:G1"])[0][0]

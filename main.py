@@ -50,6 +50,6 @@ if __name__ == "__main__":
     @bot.message_handler(commands=["set_charge"])
     @admin_only
     def set_charge(message):
-        bot.reply_to(message, mono_manager.set_user_charge())
+        bot.reply_to(message, mono_manager.set_monthly_charge())
 
     bot.infinity_polling()
