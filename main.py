@@ -11,7 +11,7 @@ def admin_only(func):
         if message.from_user.id == config.ADMIN_USER_ID:
             return func(message)
         else:
-            bot.reply_to(message, "Команда тільки для власника")
+            bot.reply_to(message, config.ONLY_FOR_ADMIN_MESSAGE_UA)
 
     return wrapper
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         bot.reply_to(
             message, sheet_manager.get_debtors_message(usd_rate_sell)
         ) if usd_rate_sell > 0 else bot.reply_to(
-            message, "Моно важко, спробуй ще раз згодом"
+            message, config.TOO_MANY_REQUESTS_MESSAGE_UA
         )
 
     @bot.message_handler(commands=["set_updates"])

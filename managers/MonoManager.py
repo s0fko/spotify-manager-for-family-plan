@@ -143,7 +143,7 @@ class MonoManager:
         # check if operation can be proceeded
         thirty_days_ago = datetime.datetime.now() - datetime.timedelta(days=30)
         if datetime.datetime.fromtimestamp(from_time) < thirty_days_ago:
-            return "Моно не десть дістати виписку за 30 днів+"
+            return config.UPDATE_WAS_30_DAYS_AGO_MESSAGE_UA
 
         # get list of statemets
         paid, income = MonoManager.__get_monobanka_statement(from_time)
@@ -166,7 +166,7 @@ class MonoManager:
         f = open(config.LAST_PAY_UPDATE_FILE_PATH, "w")
         f.write(time_now)
 
-        return "Зарахування на банку внесені"
+        return config.PAY_UPDATE_SUCCESSFUL_MESSAGE_UA
 
     def set_user_charge(self) -> str:
         """

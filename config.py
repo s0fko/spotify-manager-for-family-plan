@@ -51,6 +51,11 @@ HELP_MESSAGE_UA = (
     """,  # noqa: E122
 )
 
+ONLY_FOR_ADMIN_MESSAGE_UA = "Команда тільки для власника"
+TOO_MANY_REQUESTS_MESSAGE_UA = "Моно важко, спробуй ще раз згодом"
+UPDATE_WAS_30_DAYS_AGO_MESSAGE_UA = "Моно не десть дістати виписку за 30 днів+"
+PAY_UPDATE_SUCCESSFUL_MESSAGE_UA = "Зарахування на банку внесені"
+
 DEBTORS_MESSAGE_UA = "Боржники:\n"
 DEBTORS_DEBT_MESSAGE_UA = "{name} твій баланс {balance}, заплати {pay}\n"
 NO_DEBTORS_MESSAGE_UA = "Нема :)"
@@ -62,6 +67,8 @@ NO_NEED_TO_WITHDRAWAL_MESSAGE_UA = "Відрахування ще не потр�
 MONO_TOKEN = "monobank_token"
 MONO_ACCOUNT = "0"
 MONOBANKA_ID = "monobanka_id"
+
+JAR_LINK = "https://send.monobank.ua/jar/jar_id"
 
 DESCRIPTION_PAID_UA = "Від: "
 DESCRIPTION_WITHDRAWAL_UA = "На чорну картку"

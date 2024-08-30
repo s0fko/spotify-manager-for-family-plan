@@ -43,7 +43,7 @@ class SheetManager:
         if not debtors_exists:
             message += config.NO_DEBTORS_MESSAGE_UA
         else:
-            message += "\n" + config.MONOBANKA_LINK
+            message += "\n" + config.JAR_LINK
 
         return message
 
